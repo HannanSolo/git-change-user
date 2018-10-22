@@ -25,24 +25,8 @@ var versionCmd = &cobra.Command{
 	},
 }
 
-var createCmd = &cobra.Command{
-	Use:   "create [sub]",
-	Short: "Create new [user] or [config]",
-	Long: `Create new user in config file or creates 
-new config file based on present git config`,
-	Args: cobra.MinimumNArgs(1),
-}
-
-var userCmd = &cobra.Command{
-	Use:   "gcu create user [user, name, email]",
-	Short: "Create new user in config file",
-	Long:  "Create new user in config file",
-	Args:  cobra.MinimumNArgs(3),
-}
-
 func Execute() {
-	rootCmd.AddCommand(versionCmd, createCmd)
-	createCmd.AddCommand(userCmd)
+	rootCmd.AddCommand(versionCmd)
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println("Make sure your config file exists.")
 		os.Exit(1)

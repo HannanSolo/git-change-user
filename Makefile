@@ -1,4 +1,4 @@
 all: build
 
 build:
-	go build -o bin/gcu main.go
+	go build -o bin/gcu gcu.go
