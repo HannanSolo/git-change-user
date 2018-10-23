@@ -14,6 +14,10 @@ type gitUser struct {
 	Email string `yaml:"email"`
 }
 
+func (g gitUser) String() string {
+	return fmt.Sprintf("\tname: %v\n\temail: %v\n", g.Name, g.Email)
+}
+
 type Config struct {
 	Users        map[string]gitUser `json:"users"`
 	Config       []byte
@@ -54,11 +58,11 @@ func getHomeConfigPath() string {
 
 func (c *Config) AddUser(user, name, email string) error {
 	if dataLenghtVerification(user, name, email) {
-		return errors.New("AddUser: user, name and email cannot be empty")
+		return errors.New("add user: user, name and email cannot be empty")
 	}
 	_, ok := c.Users[user]
 	if ok {
-		return errors.New("AddUser: user already exists")
+		return errors.New("add user: user already exists")
 	}
 
 	c.Users[user] = gitUser{
@@ -68,12 +72,45 @@ func (c *Config) AddUser(user, name, email string) error {
 	return nil
 }
 
-func (c *Config) DeleteUser(name string) error {
+func (c *Config) DeleteUser(user string) error {
+	_, ok := c.Users[user]
+	if !ok {
+		return errors.New("delete user: user already does not exist")
+	}
+	delete(c.Users, user)
 	return nil
 }
 
 func (c *Config) EditUser(user, name, email string) error {
+	if dataLenghtVerification(user, name, email) {
+		return errors.New("edit user: user, name and email cannot be empty")
+	}
+	if _, ok := c.Users[user]; !ok {
+		return errors.New("edit user: user does not exist")
+	}
+	g := &gitUser{
+		Name:  name,
+		Email: email,
+	}
+	c.Users[user] = *g
 	return nil
+}
+
+func (c *Config) SaveConfig(path string) error {
+	f, err := os.Open(path)
+	defer f.Close()
+	if err != nil && os.IsNotExist(err) {
+		f, err = os.Create(path)
+	} else if err != nil {
+		return err
+	}
+	_, err = f.Write(c.Config)
+	if err != nil {
+		return err
+	}
+	err = f.Sync()
+
+	return err
 }
 
 func checkLength(s string) bool {

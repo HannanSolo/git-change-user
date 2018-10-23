@@ -1,6 +1,8 @@
 package confighandler
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 )
@@ -71,13 +73,13 @@ func TestAddUser(t *testing.T) {
 func TestDeleteUser(t *testing.T) {
 	c, _ := LoadConfig(".gcu.example.yaml")
 
-	err := c.DeleteUser("John")
+	err := c.DeleteUser("Foo")
 	if err == nil {
-		t.Errorf("should return error because referenced does not exist")
+		t.Errorf("should return error because user does not exist")
 	}
 
 	err = c.DeleteUser("John")
-	if _, ok := c.Users["John"]; !ok && err == nil {
+	if _, ok := c.Users["John"]; ok && err != nil {
 		t.Errorf("should delete user John")
 	}
 }
@@ -87,7 +89,12 @@ func TestEditUser(t *testing.T) {
 
 	err := c.EditUser("Foo", "John Smith", "john@smith.com")
 	if err == nil {
-		t.Errorf("should return error because referenced user does not exist")
+		t.Errorf("should return error because user does not exist")
+	}
+
+	err = c.EditUser("", "", "")
+	if err == nil {
+		t.Errorf("should return error because data cannot be an empty string")
 	}
 
 	err = c.EditUser("John", "John Smith", "john@smith.com")
@@ -102,5 +109,48 @@ func TestEditUser(t *testing.T) {
 }
 
 func TestSaveConfig(t *testing.T) {
+	c, _ := LoadConfig(".gcu.example.yaml")
+	path := ".test.config.yaml"
 
+	_ = c.SaveConfig(path)
+	defer os.Remove(path)
+	if _, err := os.Stat(".test.config.yaml"); os.IsNotExist(err) {
+		t.Errorf("file should exist after saving")
+	}
+
+	savedData, _ := ioutil.ReadFile(path)
+	if !testSlice(savedData, c.Config) {
+		t.Errorf("saved data should be the same as before")
+	}
+}
+func TestUserString(t *testing.T) {
+	c, _ := LoadConfig(".gcu.example.yaml")
+
+	if func(a interface{}) bool {
+		_, ok := a.(fmt.Stringer)
+		return !ok
+	}(c.Users["John"]) {
+		t.Errorf("git user should implement Stringer interface")
+	}
+
+	str := c.Users["John"].String()
+	expected := "\tname: John Titor\n\temail: john@titor.com\n"
+	if str != expected {
+		t.Errorf("should return string: %v, was: %v", expected, str)
+	}
+}
+
+func testSlice(a, b []byte) bool {
+	if (a == nil) || (b == nil) {
+		return false
+	}
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
