@@ -1,7 +1,6 @@
 language: go
 go:
-  - 1.10.x
-  - master
+  - 1.11.x
 
 os:
   - linux
@@ -9,9 +8,11 @@ os:
 dist: trusty
 sudo: false
 
-install:
-  - env GO111MODULE=on go get
+env:
+  - GO111MODULE=on
+
+install: true
 
 script:
-  - env GO111MODULE=on make
-  - env GO111MODULE=on go test ./...
+  - make
+  - go test -v ./...
