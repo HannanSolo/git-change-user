@@ -2,7 +2,6 @@ package userchanger
 
 import (
 	"errors"
-	"fmt"
 	"os/exec"
 )
 
@@ -19,8 +18,7 @@ func BecomeUser(name, email string) error {
 }
 
 func useUsername(name string) error {
-	nameWithQuotes := parseUsername(name)
-	cmd := exec.Command("git", "config", "--global", "user.name", nameWithQuotes)
+	cmd := exec.Command("git", "config", "--global", "user.name", name)
 	if err := cmd.Run(); err != nil {
 		return errors.New("gcu: check if the git is installed and in $PATH")
 	}
@@ -33,8 +31,4 @@ func useEmail(email string) error {
 		return errors.New("gcu: check if the git is installed and in $PATH")
 	}
 	return nil
-}
-
-func parseUsername(name string) string {
-	return fmt.Sprintf("\"%s\"", name)
 }

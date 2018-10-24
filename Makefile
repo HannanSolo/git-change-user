@@ -1,6 +1,6 @@
-all: install build
+all: dependencies build
 
-install:
+dependencies:
 	go get
 
 build:
