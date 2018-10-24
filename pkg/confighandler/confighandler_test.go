@@ -134,7 +134,7 @@ func TestUserString(t *testing.T) {
 	}
 
 	str := c.Users["John"].String()
-	expected := "\tname: John Titor\n\temail: john@titor.com\n"
+	expected := "\n\tJohn Titor\n\tjohn@titor.com\n"
 	if str != expected {
 		t.Errorf("should return string: %v, was: %v", expected, str)
 	}
