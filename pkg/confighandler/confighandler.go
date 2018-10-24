@@ -15,30 +15,25 @@ type gitUser struct {
 }
 
 func (g gitUser) String() string {
-	return fmt.Sprintf("\tname: %v\n\temail: %v\n", g.Name, g.Email)
+	return fmt.Sprintf("\n\t%v\n\t%v\n", g.Name, g.Email)
 }
 
 type Config struct {
-	Users        map[string]gitUser `json:"users"`
-	Config       []byte
-	pathToConfig string
+	Users  map[string]gitUser `json:"users"`
+	Config []byte
+	Path   string
 }
 
 func LoadConfig(path string) (*Config, error) {
 	c := &Config{
-		Users: map[string]gitUser{
-			"nobody": {
-				Name:  "nobody",
-				Email: "nobody",
-			},
-		},
-		pathToConfig: path,
+		Users: make(map[string]gitUser, 1),
+		Path:  path,
 	}
-	if c.pathToConfig == "" {
-		c.pathToConfig = getHomeConfigPath()
+	if c.Path == "" {
+		c.Path = getHomeConfigPath()
 	}
 
-	f, err := ioutil.ReadFile(c.pathToConfig)
+	f, err := ioutil.ReadFile(c.Path)
 	if err != nil {
 		return c, err
 	}
@@ -73,6 +68,9 @@ func (c *Config) AddUser(user, name, email string) error {
 }
 
 func (c *Config) DeleteUser(user string) error {
+	if ok := checkLength(user); ok {
+		return errors.New("delete user: user needs to be specified")
+	}
 	_, ok := c.Users[user]
 	if !ok {
 		return errors.New("delete user: user already does not exist")
@@ -97,20 +95,34 @@ func (c *Config) EditUser(user, name, email string) error {
 }
 
 func (c *Config) SaveConfig(path string) error {
-	f, err := os.Open(path)
-	defer f.Close()
+	err := c.updateConfig()
+	if err != nil {
+		return errors.New("update config: there was error in marshalling to the yaml format")
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil && os.IsNotExist(err) {
 		f, err = os.Create(path)
 	} else if err != nil {
 		return err
 	}
-	_, err = f.Write(c.Config)
+	defer f.Close()
+
+	err = ioutil.WriteFile(path, c.Config, 0)
 	if err != nil {
 		return err
 	}
 	err = f.Sync()
 
 	return err
+}
+
+func (c *Config) updateConfig() error {
+	newConfig, err := yaml.Marshal(c.Users)
+	if err != nil {
+		return err
+	}
+	c.Config = newConfig
+	return nil
 }
 
 func checkLength(s string) bool {
