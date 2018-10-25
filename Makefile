@@ -5,3 +5,7 @@ dependencies:
 
 build:
 	go build -o bin/gcu gcu.go
+
+install:
+	go build -o bin/gcu gcu.go
+	mv bin/gcu /bin
